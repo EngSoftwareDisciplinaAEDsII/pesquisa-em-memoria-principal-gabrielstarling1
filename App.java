@@ -68,58 +68,114 @@ public class App {
     }
     
     /**
-     * Lê os dados de um arquivo-texto e retorna uma árvore de produtos. Arquivo-texto no formato
-     * N (quantidade de produtos) <br/>
+     * Lê os dados de um arquivo-texto e armazena em árvores binárias de busca.
+     * Arquivo-texto no formato: N (quantidade de produtos) <br/>
      * tipo;descrição;preçoDeCusto;margemDeLucro;[dataDeValidade] <br/>
-     * Deve haver uma linha para cada um dos produtos. Retorna uma árvore vazia em caso de problemas com o arquivo.
+     * Deve haver uma linha para cada um dos produtos. 
      * @param nomeArquivoDados Nome do arquivo de dados a ser aberto.
-     * @return Uma árvore com os produtos carregados, ou vazia em caso de problemas de leitura.
+     * @param produtosPorNome Árvore que será preenchida com produtos organizados por nome/descrição.
+     * @param produtosPorId Árvore que será preenchida com produtos organizados por ID.
      */
-    static Produto[] lerProdutos(String nomeArquivoDados) {
+    static void lerProdutos(String nomeArquivoDados, ABB<String, Produto> produtosPorNome, ABB<Integer, Produto> produtosPorId) {
     	
     	Scanner arquivo = null;
     	int numProdutos;
     	String linha;
     	Produto produto;
-    	Produto[] produtosCadastrados;
     	
     	try {
     		arquivo = new Scanner(new File(nomeArquivoDados), Charset.forName("UTF-8"));
     		
     		numProdutos = Integer.parseInt(arquivo.nextLine());
-    		produtosCadastrados = new Produto[numProdutos];
     		
     		for (int i = 0; i < numProdutos; i++) {
     			linha = arquivo.nextLine();
     			produto = Produto.criarDoTexto(linha);
-    			produtosCadastrados[i] = produto;
+    			
+    			// Inserir na árvore por nome (descrição)
+    			produtosPorNome.inserir(produto.getDescricao(), produto);
+    			
+    			// Inserir na árvore por ID
+    			produtosPorId.inserir(produto.getIdProduto(), produto);
     		}
     		quantosProdutos = numProdutos;
     		
     	} catch (IOException excecaoArquivo) {
-    		produtosCadastrados = null;
+    		System.err.println("Erro ao abrir o arquivo: " + excecaoArquivo.getMessage());
     	} finally {
-    		arquivo.close();
+    		if (arquivo != null) {
+    			arquivo.close();
+    		}
     	}
-    	
-    	return produtosCadastrados;
     }
     
     
     /** Localiza um produto na árvore de produtos organizados por id, a partir do código de produto informado pelo usuário, e o retorna. 
-    *  Em caso de não encontrar o produto, retorna null */
+    *  Em caso de não encontrar o produto, retorna null. Imprime o número de comparações e tempo de execução */
     static Produto localizarProdutoID(ABB<Integer, Produto> produtosCadastrados) {
         
-       // TODO
-    	return null;
+    	if (produtosCadastrados == null || produtosCadastrados.vazia()) {
+    		System.out.println("Nenhum produto foi carregado. Carregue produtos por ID primeiro.");
+    		return null;
+    	}
+    	
+    	Integer idProcurado = lerOpcao("Digite o ID do produto a procurar: ", Integer.class);
+    	if (idProcurado == null) {
+    		System.out.println("ID inválido!");
+    		return null;
+    	}
+    	
+    	try {
+    		Produto resultado = localizarProduto(produtosCadastrados, idProcurado);
+    		System.out.println("\nProduto encontrado!");
+    		System.out.println("Comparações realizadas: " + produtosCadastrados.getComparacoes());
+    		System.out.println("Tempo de execução: " + produtosCadastrados.getTempo() + " ms");
+    		return resultado;
+    	} catch (NoSuchElementException e) {
+    		System.out.println("\nProduto não encontrado!");
+    		System.out.println("Comparações realizadas: " + produtosCadastrados.getComparacoes());
+    		System.out.println("Tempo de execução: " + produtosCadastrados.getTempo() + " ms");
+    		return null;
+    	}
     }
     
     /** Localiza um produto na árvore de produtos organizados por nome, a partir do nome de produto informado pelo usuário, e o retorna. 
-     *  A busca não é sensível ao caso. Em caso de não encontrar o produto, retorna null */
+     *  A busca não é sensível ao caso. Em caso de não encontrar o produto, retorna null. Imprime o número de comparações e tempo de execução */
     static Produto localizarProdutoNome(ABB<String, Produto> produtosCadastrados) {
         
-    	// TODO
-        return null;
+    	if (produtosCadastrados == null || produtosCadastrados.vazia()) {
+    		System.out.println("Nenhum produto foi carregado. Carregue produtos por nome primeiro.");
+    		return null;
+    	}
+    	
+    	String nomeProcurado = teclado.nextLine();
+    	System.out.print("Digite o nome/descrição do produto a procurar: ");
+    	nomeProcurado = teclado.nextLine();
+    	
+    	try {
+    		Produto resultado = localizarProduto(produtosCadastrados, nomeProcurado);
+    		System.out.println("\nProduto encontrado!");
+    		System.out.println("Comparações realizadas: " + produtosCadastrados.getComparacoes());
+    		System.out.println("Tempo de execução: " + produtosCadastrados.getTempo() + " ms");
+    		return resultado;
+    	} catch (NoSuchElementException e) {
+    		System.out.println("\nProduto não encontrado!");
+    		System.out.println("Comparações realizadas: " + produtosCadastrados.getComparacoes());
+    		System.out.println("Tempo de execução: " + produtosCadastrados.getTempo() + " ms");
+    		return null;
+    	}
+    }
+    
+    /** Método genérico que localiza um produto em uma árvore binária de busca usando uma chave genérica.
+     *  Pode ser utilizado para buscar por qualquer tipo de chave (ID, Nome, etc).
+     *  @param <K> Tipo genérico da chave
+     *  @param produtosCadastrados A árvore com produtos a ser pesquisada
+     *  @param procurado A chave do produto a ser localizado
+     *  @return O produto associado à chave procurada
+     *  @throws NoSuchElementException se o produto não for encontrado
+     */
+    static <K> Produto localizarProduto(ABB<K, Produto> produtosCadastrados, K procurado) {
+    	return produtosCadastrados.pesquisar(procurado);
     }
     
     private static void mostrarProduto(Produto produto) {
@@ -138,13 +194,26 @@ public class App {
 		teclado = new Scanner(System.in, Charset.forName("UTF-8"));
         nomeArquivoDados = "produtos.txt";
         
+        produtosCadastradosPorNome = new ABB<>();
+        produtosCadastradosPorId = new ABB<>();
+        
         int opcao = -1;
       
         do{
             opcao = menu();
             switch (opcao) {
-                case 1 -> produtosCadastradosPorNome = null; // TODO
-                case 2 -> produtosCadastradosPorId = null; // TODO
+                case 1 -> {
+                    produtosCadastradosPorNome = new ABB<>();
+                    produtosCadastradosPorId = new ABB<>();
+                    lerProdutos(nomeArquivoDados, produtosCadastradosPorNome, produtosCadastradosPorId);
+                    System.out.println("Produtos carregados por nome com sucesso!");
+                }
+                case 2 -> {
+                    produtosCadastradosPorNome = new ABB<>();
+                    produtosCadastradosPorId = new ABB<>();
+                    lerProdutos(nomeArquivoDados, produtosCadastradosPorNome, produtosCadastradosPorId);
+                    System.out.println("Produtos carregados por ID com sucesso!");
+                }
                 case 3 -> mostrarProduto(localizarProdutoNome(produtosCadastradosPorNome));
                 case 4 -> mostrarProduto(localizarProdutoID(produtosCadastradosPorId));
             }

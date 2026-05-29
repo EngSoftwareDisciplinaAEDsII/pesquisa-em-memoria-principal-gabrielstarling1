@@ -7,6 +7,9 @@ public class ABB<K, V> implements IMapeamento<K, V>{
 	private No<K, V> raiz; // referência à raiz da árvore.
 	private Comparator<K> comparador; //comparador empregado para definir "menores" e "maiores".
 	private int tamanho;
+	private long comparacoes; // contador de comparações realizadas
+	private double tempo; // tempo em millisegundos da última operação
+	private long tempoInicio; // marcador de tempo inicial da operação
 	
 	/**
 	 * Método auxiliar para inicialização da árvore binária de busca.
@@ -21,6 +24,9 @@ public class ABB<K, V> implements IMapeamento<K, V>{
 	private void init(Comparator<K> comparador) {
 		raiz = null;
 		tamanho = 0;
+		comparacoes = 0;
+		tempo = 0.0;
+		tempoInicio = 0;
 		if (comparador == null) {
 			comparador = (Comparator<K>) Comparator.naturalOrder();
 		}
@@ -132,8 +138,11 @@ public class ABB<K, V> implements IMapeamento<K, V>{
      * @return o tamanho atualizado da árvore após a execução da operação de inserção.
      */
 	public int inserir(K chave, V item) {
-    	// TODO
-		return 0;
+		tempoInicio = System.currentTimeMillis();
+		comparacoes = 0;
+		raiz = inserir(raiz, chave, item);
+		tempo = System.currentTimeMillis() - tempoInicio;
+		return tamanho;
 	}
     
     /**
@@ -145,8 +154,28 @@ public class ABB<K, V> implements IMapeamento<K, V>{
      * @throws RuntimeException se um item com a mesma chave já estiver presente na árvore.
      */
     protected No<K, V> inserir(No<K, V> raizArvore, K chave, V item) {
-    	// TODO
-    	return null;
+    	
+    	if (raizArvore == null) {
+    		// Se chegamos em um ponto nulo, criamos um novo nó
+    		tamanho++;
+    		return new No<K, V>(chave, item);
+    	}
+    	
+    	int comparacao = comparador.compare(chave, raizArvore.getChave());
+    	comparacoes++;
+    	
+    	if (comparacao == 0) {
+    		// Chave já existe
+    		throw new RuntimeException("Chave " + chave + " já existe na árvore!");
+    	} else if (comparacao < 0) {
+    		// Inserir na sub-árvore esquerda
+    		raizArvore.setEsquerda(inserir(raizArvore.getEsquerda(), chave, item));
+    	} else {
+    		// Inserir na sub-árvore direita
+    		raizArvore.setDireita(inserir(raizArvore.getDireita(), chave, item));
+    	}
+    	
+    	return raizArvore;
     }
 
     @Override 
@@ -179,13 +208,11 @@ public class ABB<K, V> implements IMapeamento<K, V>{
 	
 	@Override
 	public long getComparacoes() {
-		// TODO
-		return 0;
+		return comparacoes;
 	}
 
 	@Override
 	public double getTempo() {
-		// TODO
-		return 0.0;
+		return tempo;
 	}
 }

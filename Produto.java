@@ -102,6 +102,22 @@ public abstract class Produto implements Comparable<Produto>{
     }
     
     /**
+     * Retorna o ID do produto
+     * @return inteiro com o identificador único do produto
+     */
+    public int getIdProduto() {
+    	return idProduto;
+    }
+    
+    /**
+     * Retorna a descrição do produto
+     * @return string com a descrição/nome do produto
+     */
+    public String getDescricao() {
+    	return descricao;
+    }
+    
+    /**
      * Cria um produto a partir de uma linha de dados em formato texto. A linha de dados deve estar de acordo com a formatação
      * "tipo;descrição;preçoDeCusto;margemDeLucro;[dataDeValidade]"
      * ou o funcionamento não será garantido. Os tipos são 1, para produto não perecível; e 2, para perecível.
