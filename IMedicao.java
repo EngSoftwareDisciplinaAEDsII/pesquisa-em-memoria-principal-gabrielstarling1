@@ -1,5 +1,5 @@
 public interface IMedicao {
-    public long getComparacoes();
-    public double getTempo();
     
+	public long getComparacoes();
+    public double getTempo();
 } 
